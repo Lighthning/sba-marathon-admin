@@ -1,14 +1,13 @@
-# Use Node.js 20
-FROM node:20-slim
+# Build stage
+FROM node:20 as builder
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm install
+# Install ALL dependencies (including devDependencies for build)
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
@@ -16,8 +15,16 @@ COPY . .
 # Build the app
 RUN npm run build
 
-# Install serve globally
+# Production stage
+FROM node:20-slim
+
+WORKDIR /app
+
+# Install serve
 RUN npm install -g serve
+
+# Copy built files from builder
+COPY --from=builder /app/dist ./dist
 
 # Expose port
 EXPOSE 3000
