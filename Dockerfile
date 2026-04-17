@@ -1,0 +1,26 @@
+# Use Node.js 20
+FROM node:20-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the app
+RUN npm run build
+
+# Install serve globally
+RUN npm install -g serve
+
+# Expose port
+EXPOSE 3000
+
+# Start the app
+CMD ["serve", "dist", "-l", "3000", "--single"]
