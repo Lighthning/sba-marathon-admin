@@ -11,8 +11,10 @@ import {
   Database,
   Eye,
   EyeOff,
+  Save,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { settingsApi } from '../lib/api';
 
 type TabType = 'program' | 'notifications' | 'account' | 'system';
 
@@ -20,6 +22,11 @@ const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('program');
   const [isLoading, setIsLoading] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<'connected' | 'disconnected' | 'loading'>('loading');
+
+  // Program settings state
+  const [programSettings, setProgramSettings] = useState<any>(null);
+  const [startDate, setStartDate] = useState('');
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Notification Settings State
   const [defaultNotificationTime, setDefaultNotificationTime] = useState(
@@ -37,10 +44,22 @@ const Settings: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Fetch database status on mount
+  // Fetch database status and program settings on mount
   useEffect(() => {
     fetchDatabaseStatus();
+    fetchProgramSettings();
   }, []);
+
+  const fetchProgramSettings = async () => {
+    try {
+      const settings = await settingsApi.get();
+      setProgramSettings(settings);
+      setStartDate(settings.startDate || '');
+    } catch (error) {
+      console.error('Failed to fetch program settings:', error);
+      toast.error('Failed to load program settings');
+    }
+  };
 
   const fetchDatabaseStatus = async () => {
     try {
@@ -110,6 +129,31 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleSaveProgramSettings = async () => {
+    // Validate date format
+    if (!startDate) {
+      toast.error('Start date is required');
+      return;
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(startDate)) {
+      toast.error('Invalid date format. Use YYYY-MM-DD');
+      return;
+    }
+
+    try {
+      setIsSavingSettings(true);
+      await settingsApi.update({ startDate });
+      toast.success('Program settings updated successfully');
+      // Refresh settings to show updated values
+      await fetchProgramSettings();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to update settings');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const tabs = [
     { id: 'program' as TabType, label: 'Program Configuration', icon: Calendar },
@@ -203,7 +247,7 @@ const Settings: React.FC = () => {
                     Program Name
                   </label>
                   <p style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
-                    SBA Marathon — 99 Days to Build
+                    {programSettings?.programName || 'Loading...'}
                   </p>
                 </div>
 
@@ -219,9 +263,13 @@ const Settings: React.FC = () => {
                   }}>
                     Start Date
                   </label>
-                  <p style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
-                    April 25, 2026
-                  </p>
+                  <input
+                    type="date"
+                    className="input"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    style={{ width: '100%', maxWidth: '220px' }}
+                  />
                 </div>
 
                 <div>
@@ -259,16 +307,31 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{
-                marginTop: '24px',
-                padding: '16px',
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-              }}>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                  These values are read-only. Contact system administrator to modify program configuration.
-                </p>
+              <div style={{ marginTop: '24px' }}>
+                <button
+                  className="btn-primary"
+                  onClick={handleSaveProgramSettings}
+                  disabled={isSavingSettings}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    opacity: isSavingSettings ? 0.6 : 1,
+                    cursor: isSavingSettings ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isSavingSettings ? (
+                    <>
+                      <Clock className="animate-spin" size={16} />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} />
+                      Save Settings
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}

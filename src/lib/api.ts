@@ -76,4 +76,18 @@ export const taskApi = {
   },
 };
 
+export const settingsApi = {
+  // Get program settings
+  get: async (): Promise<any> => {
+    const response = await api.get('/admin/settings');
+    return response.data.data;
+  },
+
+  // Update program settings
+  update: async (data: { startDate?: string; programName?: string; zoomDay?: string; zoomTime?: string; zoomLink?: string; websiteUrl?: string }): Promise<any> => {
+    const response = await api.put('/admin/settings', data);
+    return response.data.data;
+  },
+};
+
 export default api;
