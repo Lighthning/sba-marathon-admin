@@ -1,0 +1,17 @@
+node_modules
+.git
+.gitignore
+.env
+.env.local
+*.log
+.DS_Store
+.railway
+src
+public
+*.md
+package.json
+package-lock.json
+tsconfig.json
+vite.config.ts
+tailwind.config.ts
+postcss.config.js

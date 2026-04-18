@@ -1,30 +1,13 @@
-# Build stage
-FROM node:20 as builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package.json package-lock.json ./
-
-# Install ALL dependencies (including devDependencies for build)
-RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
-
-# Copy source code
-COPY . .
-
-# Build the app
-RUN npm run build
-
-# Production stage
+# Simple static file server
 FROM node:20-slim
 
 WORKDIR /app
 
-# Install serve
+# Install serve globally
 RUN npm install -g serve
 
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist
+# Copy pre-built dist folder
+COPY dist ./dist
 
 # Expose port
 EXPOSE 3000
