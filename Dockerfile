@@ -13,4 +13,4 @@ COPY dist ./dist
 EXPOSE 3000
 
 # Start the app with PORT from environment
-CMD sh -c "serve dist -l ${PORT:-3000} --single"
+CMD sh -c "serve dist -l ${PORT:-3000}"
